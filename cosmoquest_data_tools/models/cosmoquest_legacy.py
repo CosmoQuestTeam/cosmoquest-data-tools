@@ -103,7 +103,7 @@ class Image(db.Entity):
     id = PrimaryKey(int, size=16, auto=True, unsigned=True)
     image_set = Optional("ImageSet", column="image_set_id")
     name = Optional(str, 255, unique=True)
-    file_location = Optional(LongStr)
+    file_location = Optional(LongStr, lazy=False)
     priority = Optional(float)
     premarked = Optional(bool, default=False)
     done = Optional(bool, default=False)

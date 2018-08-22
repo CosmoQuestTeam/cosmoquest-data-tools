@@ -37,12 +37,18 @@ class AnnotationLibrary:
         for bounding_box in entry["bounding_boxes"]:
             annotation_class = bounding_box["annotation_class"].encode("utf-8")
 
+            if "meta" not in bounding_box:
+                bounding_box["meta"] = "N/A"
+
+            meta = bounding_box["meta"].encode("utf-8")
+
             bounding_boxes.append((
                 bounding_box["top"],
                 bounding_box["left"],
                 bounding_box["bottom"],
                 bounding_box["right"],
-                annotation_class
+                annotation_class,
+                meta
             ))
 
             self.annotation_classes.add(annotation_class)
