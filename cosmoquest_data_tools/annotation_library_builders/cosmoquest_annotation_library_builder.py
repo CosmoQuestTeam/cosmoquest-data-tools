@@ -78,7 +78,7 @@ class CosmoquestAnnotationLibraryBuilder(AnnotationLibraryBuilder):
             # Build a set of the unique encoutered images
             images = [self.image_urls[image_id] for image_id in set([m.image.id for m in marks])]
 
-            print(f"Found {len(marks)} marks in {len(images)} images for user '{target}' in application '{self.application}'...")
+            print(f"Found {len(marks)} marks in {len(images)} images for user '{target}' in application '{self.application}'...", end="\n\n")
 
             # Synchronize images to disk, for those we don't have yet
             self._sync_images(images)
@@ -179,6 +179,10 @@ class CosmoquestAnnotationLibraryBuilder(AnnotationLibraryBuilder):
 
     def _generate_bounding_boxes(self, marks, user):
         for mark in marks:
+            # Some data is garbage in the DB; filter it
+            if mark.diameter is None or mark.x is None or mark.y is None:
+                continue
+
             image_url = self.image_urls[mark.image.id]
             file_name = "_".join(image_url.split("/")[-3:])
 

@@ -1,19 +1,33 @@
-import datetime
 import h5py
+import os
+import io
+
+import numpy as np
+
+from PIL import Image
+
+import skimage.color
+import skimage.util
 
 
 class AnnotationLibrary:
 
-    def __init__(self, name, file_path=None):
+    def __init__(self, name, file_path=None, read_only=False):
         self.name = name
-        self.h5_file = h5py.File(file_path or self.file_path, "a")
+        self.h5_file = h5py.File(file_path or self.file_path, "r" if read_only else "a")
+
+        self.read_only = read_only
 
         self.keys = self._populate_keys()
         self.annotation_classes = self._populate_annotation_classes()
         
     @property
     def file_path(self):
-        return f"data/{self.name}_{datetime.datetime.utcnow().strftime('%Y%m%d')}.alh5"
+        return f"data/{self.name}.alh5"
+
+    @property
+    def entries(self):
+        return [key.decode("utf-8") for key in self.h5_file["keys"].value]
 
     def add_entry(self, entry):
         key = entry["file_location"].replace(".png", "")
@@ -55,6 +69,28 @@ class AnnotationLibrary:
             
         self.h5_file.create_dataset(f"{key}-bounding-boxes", data=bounding_boxes)
 
+    def get_entry(self, key, field):
+        return self.h5_file[f"{key}-{field}"].value
+
+    def get_image_bytes(self, key):
+        return self.get_entry(key, "image")[0]
+
+    def get_image_array(self, key):
+        image_array = np.array(Image.open(io.BytesIO(self.get_image_bytes(key))), dtype="uint8")
+
+        # The image sets are mixes of 2 and 3 channel images
+        # We are going to make sure we only work with 3, for consistency        
+        if len(image_array.shape) == 2:
+            image_array = skimage.util.img_as_ubyte(skimage.color.gray2rgb(image_array))
+
+        return image_array
+
+    def get_image_shape(self, key):
+        return [int(i) for i in self.get_entry(key, "shape")]
+    
+    def get_bounding_boxes(self, key):
+        return self._format_bounding_boxes(self.get_entry(key, "bounding-boxes"))
+
     def commit(self):
         self.commit_keys()
         self.commit_annotation_classes()
@@ -83,6 +119,29 @@ class AnnotationLibrary:
         else:
             return set()
 
+    def _format_bounding_boxes(self, bounding_boxes):
+        return [self._format_bounding_box(bounding_box) for bounding_box in bounding_boxes]
+
+    def _format_bounding_box(self, bounding_box):
+        return {
+            "y0": int(float(bounding_box[0])),
+            "x0": int(float(bounding_box[1])),
+            "y1": int(float(bounding_box[2])),
+            "x1": int(float(bounding_box[3])),
+            "label": bounding_box[4].decode("utf-8"),
+            "meta": bounding_box[5].decode("utf-8")
+        }
+
     @classmethod
-    def load(cls, h5_path):
-        pass
+    def load(cls, name_or_path, **kwargs):
+        if os.path.isfile(name_or_path):
+            file_path = name_or_path
+            name = name_or_path.split("/")[-1].replace(".alh5", "")
+        else:
+            name = name_or_path
+            file_path = f"data/{name_or_path}.alh5"
+
+            if not os.path.isfile(file_path):
+                raise FileNotFoundError(file_path)
+
+        return cls(name, file_path=file_path, **kwargs)
