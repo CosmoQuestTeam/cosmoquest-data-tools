@@ -1,6 +1,8 @@
 import h5py
 import os
 import io
+import subprocess
+import shlex
 
 import numpy as np
 
@@ -91,6 +93,16 @@ class AnnotationLibrary:
     def get_bounding_boxes(self, key):
         return self._format_bounding_boxes(self.get_entry(key, "bounding-boxes"))
 
+    def replace_bounding_boxes(self, key, bounding_boxes):
+        bounding_boxes = self._encode_bounding_boxes(bounding_boxes)
+        key = f"{key}-bounding-boxes"
+
+        del self.h5_file[key]
+        self.h5_file.create_dataset(key, data=bounding_boxes)
+
+    def flush(self):
+        self.h5_file.flush()
+
     def commit(self):
         self.commit_keys()
         self.commit_annotation_classes()
@@ -107,6 +119,20 @@ class AnnotationLibrary:
 
         self.h5_file.create_dataset("annotation_classes", data=list(self.annotation_classes))
 
+    # In HDF5, due to the sequential nature of the writing, the space occupied by altered / deleted items is not reclaimed
+    # Repacking is one way around this downside.
+    def repack(self):
+        self.h5_file.close()
+
+        FNULL = open(os.devnull, "w")
+        subprocess.call(shlex.split(f"ptrepack {self.file_path} {self.file_path}.tmp"), stdout=FNULL, stderr=subprocess.STDOUT)
+        FNULL.close()
+
+        os.remove(self.file_path)
+        os.rename(f"{self.file_path}.tmp", self.file_path)
+
+        self.h5_file = h5py.File(self.file_path, "r" if self.read_only else "a")
+
     def _populate_keys(self):
         if "keys" in self.h5_file:
             return self.h5_file["keys"].value
@@ -119,6 +145,7 @@ class AnnotationLibrary:
         else:
             return set()
 
+    # Go from encoded in HDF5 dataset to dict
     def _format_bounding_boxes(self, bounding_boxes):
         return [self._format_bounding_box(bounding_box) for bounding_box in bounding_boxes]
 
@@ -131,6 +158,20 @@ class AnnotationLibrary:
             "label": bounding_box[4].decode("utf-8"),
             "meta": bounding_box[5].decode("utf-8")
         }
+
+    # Go from dict to encoded in HDF5 dataset
+    def _encode_bounding_boxes(self, bounding_boxes):
+        return [self._encode_bounding_box(bounding_box) for bounding_box in bounding_boxes]
+
+    def _encode_bounding_box(self, bounding_box):
+        return [
+            bounding_box["y0"],
+            bounding_box["x0"],
+            bounding_box["y1"],
+            bounding_box["x1"],
+            bounding_box["label"].encode("utf-8"),
+            (bounding_box["meta"] or "N/A").encode("utf-8")
+        ]
 
     @classmethod
     def load(cls, name_or_path, **kwargs):
