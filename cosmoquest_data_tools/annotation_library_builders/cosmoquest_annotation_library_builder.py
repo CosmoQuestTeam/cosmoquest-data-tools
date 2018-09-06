@@ -94,7 +94,7 @@ class CosmoquestAnnotationLibraryBuilder(AnnotationLibraryBuilder):
                 "bounding_boxes": bounding_boxes
             }
 
-            annotation_library.add_entry(entry)
+            annotation_library.add_complete_entry(entry)
 
         annotation_library.commit()
 

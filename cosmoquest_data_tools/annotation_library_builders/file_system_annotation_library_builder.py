@@ -51,7 +51,7 @@ class FileSystemAnnotationLibraryBuilder(AnnotationLibraryBuilder):
                         bounding_box["annotation_class"] = "crater"
 
                 entry["file_location"] = f"{self.base_directory}/{entry['file_location']}"
-                annotation_library.add_entry(entry)
+                annotation_library.add_complete_entry(entry)
         
         annotation_library.commit()
 

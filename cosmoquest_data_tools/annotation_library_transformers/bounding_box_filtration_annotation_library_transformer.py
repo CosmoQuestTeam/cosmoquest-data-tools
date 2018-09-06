@@ -64,7 +64,7 @@ class BoundingBoxFiltrationAnnotationLibraryTransformer(AnnotationLibraryTransfo
                 if not processed_keys % 200:
                     self.annotation_library.flush()
 
-        self.annotation_library.repack()
+        # self.annotation_library.repack()  ... TODO: repack breaks images atm... why?
 
         return self.annotation_library
 

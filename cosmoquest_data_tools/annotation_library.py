@@ -31,9 +31,13 @@ class AnnotationLibrary:
     def entries(self):
         return [key.decode("utf-8") for key in self.h5_file["keys"].value]
 
-    def add_entry(self, entry):
+    def add_entry(self, key, field, data):
+        self.keys.add(key.encode("utf-8"))
+        self.h5_file.create_dataset(f"{key}-{field}", data=data)
+
+    def add_complete_entry(self, entry):
         key = entry["file_location"].replace(".png", "")
-        self.keys.append(key.encode("utf-8"))
+        self.keys.add(key.encode("utf-8"))
         
         # Image Data
         with open(entry["file_location"], "rb") as f:
@@ -111,7 +115,7 @@ class AnnotationLibrary:
         if "keys" in self.h5_file:
             del self.h5_file["keys"]
 
-        self.h5_file.create_dataset("keys", data=self.keys)
+        self.h5_file.create_dataset("keys", data=list(self.keys))
 
     def commit_annotation_classes(self):
         if "annotation_classes" in self.h5_file:
@@ -135,9 +139,9 @@ class AnnotationLibrary:
 
     def _populate_keys(self):
         if "keys" in self.h5_file:
-            return self.h5_file["keys"].value
+            return set(self.h5_file["keys"].value)
         else:
-            return list()
+            return set()
 
     def _populate_annotation_classes(self):
         if "annotation_classes" in self.h5_file:
