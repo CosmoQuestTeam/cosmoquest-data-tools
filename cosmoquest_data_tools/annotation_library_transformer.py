@@ -23,7 +23,7 @@ class AnnotationLibraryTransformer:
 
     def __init__(self, **kwargs):
         # Execution of transformations is concurrent for major speedups
-        self.workers = kwargs.get("workers")  # A value of 'None' here will default to the number of CPUs
+        self.workers = kwargs.get("workers") or 12
 
         self.annotation_library = kwargs["annotation_library"]  # expected
 

@@ -4,6 +4,9 @@ from cosmoquest_data_tools.annotation_library import AnnotationLibrary
 from cosmoquest_data_tools.helpers.image_augmentation_pipelines import IMAGE_AUGMENTATION_PIPELINES
 
 import io
+import os
+import shutil
+
 import concurrent.futures
 
 import imgaug as ia
@@ -24,47 +27,69 @@ class ImageAugmentationAnnotationLibraryTransformer(AnnotationLibraryTransformer
         super().__init__(**kwargs)
 
     def transform(self):
-        # TODO: Memory optimizations. Chunking? Tasks finish way faster than main process can handle them, leading to a pile-up of future results
-        with concurrent.futures.ProcessPoolExecutor(max_workers=self.workers) as executor:
-            futures = list()
+        chunk_size = self.workers * 10
+        offset = 0
 
-            for key in self.annotation_library.entries:
-                futures.append(
-                    executor.submit(
-                        execute_transform, 
-                        self.annotation_library.name,
-                        key,
-                        self.image_augmentation_pipeline,
-                        self.augmentation_count
+        keys = self.annotation_library.entries[:]
+
+        # Make a copy for the workers to read off of
+        shutil.copyfile(self.annotation_library.file_path, f"{self.annotation_library.file_path}.tmp")
+
+        while True:
+            with concurrent.futures.ProcessPoolExecutor(max_workers=self.workers) as executor:
+                chunk_start = offset
+                chunk_end = offset + chunk_size
+
+                print(f"Performing {self.augmentation_count} augmentations for images {chunk_start} to {chunk_end}...")
+
+                if chunk_end >= len(keys):
+                    chunk_end = -1
+
+                futures = list()
+
+                for key in keys[chunk_start:chunk_end]:
+                    futures.append(
+                        executor.submit(
+                            execute_transform, 
+                            f"{self.annotation_library.file_path}.tmp",
+                            key,
+                            self.image_augmentation_pipeline,
+                            self.augmentation_count
+                        )
                     )
-                )
 
-            processed_keys = 0
+                for future in concurrent.futures.as_completed(futures):
+                    try:
+                        result = future.result()
+                    except Exception as e:
+                        print(e)
+                        continue               
 
-            for future in concurrent.futures.as_completed(futures):
-                result = future.result()
+                    for entry in result:
+                        self.annotation_library.add_entry(entry[0], "image", [entry[1]])
+                        self.annotation_library.add_entry(entry[0], "shape", entry[2])
+                        self.annotation_library.add_entry(entry[0], "bounding-boxes", entry[3])
 
-                processed_keys += 1
+                    result = None
 
-                for entry in result:
-                    self.annotation_library.add_entry(entry[0], "image", [entry[1]])
-                    self.annotation_library.add_entry(entry[0], "shape", entry[2])
-                    self.annotation_library.add_entry(entry[0], "bounding-boxes", entry[3])
+                self.annotation_library.flush()
 
-                if not processed_keys % 100:
-                    self.annotation_library.flush()
+                if chunk_end == -1:
+                    break
 
-                result = None
-                future._result = None
+                offset += chunk_size
 
         self.annotation_library.commit()
 
+        os.remove(f"{self.annotation_library.file_path}.tmp")
+
         return self.annotation_library
+
 
 # Instance Methods are not serializable by Pickle (when they have foreign data types, such as here) 
 # Using a regular function is required for multiprocessing concurrency
-def execute_transform(annotation_library_name, key, image_augmentation_pipeline, augmentation_count):
-    annotation_library = AnnotationLibrary.load(annotation_library_name, read_only=True)
+def execute_transform(annotation_library_file_path, key, image_augmentation_pipeline, augmentation_count):
+    annotation_library = AnnotationLibrary.load(annotation_library_file_path, read_only=True)
     image_augmentation_pipeline = IMAGE_AUGMENTATION_PIPELINES[image_augmentation_pipeline]()
 
     # Get the Image Data
