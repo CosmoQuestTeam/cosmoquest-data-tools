@@ -139,13 +139,13 @@ class AnnotationLibrary:
 
     def _populate_keys(self):
         if "keys" in self.h5_file:
-            return set(self.h5_file["keys"].value)
+            return set([key.decode("utf-8") for key in self.h5_file["keys"].value])
         else:
             return set()
 
     def _populate_annotation_classes(self):
         if "annotation_classes" in self.h5_file:
-            return set(self.h5_file["annotation_classes"].value)
+            return set([annotation_class.decode("utf-8") for annotation_class in self.h5_file["annotation_classes"].value])
         else:
             return set()
 

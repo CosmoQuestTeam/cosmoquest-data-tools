@@ -7,3 +7,5 @@ PyMySQL==0.9.2
 requests==2.19.1
 imgaug==0.2.6
 scikit-learn==0.19.2
+tensorflow-gpu==1.10.0
+luminoth==0.2.0
