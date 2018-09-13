@@ -1,11 +1,14 @@
+from comet_ml import Experiment
+
 from luminoth.tools.dataset.readers.object_detection import ObjectDetectionReader
 from luminoth.tools.dataset.writers.object_detection_writer import ObjectDetectionWriter
 
-from luminoth.train import run as luminoth_train
 from luminoth.utils.config import get_config
 
 from cosmoquest_data_tools.annotation_library_trainer import AnnotationLibraryTrainer, AnnotationLibraryTrainerError
-from cosmoquest_data_tools.annotation_library import AnnotationLibrary
+from cosmoquest_data_tools.helpers.luminoth import luminoth_train
+
+from cosmoquest_data_tools.config import config
 
 import os
 import yaml
@@ -27,8 +30,23 @@ class LuminothAnnotationLibraryTrainer(AnnotationLibraryTrainer):
     def train(self, **kwargs):
         self._convert_annotation_library_to_tfrecords()
 
-        config = self._generate_train_config(**kwargs)
-        luminoth_train(config, environment="local")
+        luminoth_config, hyperparams = self._generate_train_config(**kwargs)
+
+        experiment = Experiment(
+            api_key=config["credentials"]["comet_ml"]["api_key"],
+            project_name=config["credentials"]["comet_ml"]["project_name"],
+            log_code=False,
+            log_graph=False,
+            auto_param_logging=False,
+            auto_metric_logging=False,
+            auto_output_logging=None,
+            log_env_details=False,
+            log_git_metadata=False
+        )
+
+        experiment.log_multiple_params(hyperparams)
+
+        luminoth_train(luminoth_config, environment="local", experiment=experiment)
 
     def predict(self, image, **kwargs):
         pass
@@ -49,17 +67,17 @@ class LuminothAnnotationLibraryTrainer(AnnotationLibraryTrainer):
 
     def _generate_train_config(self, **kwargs):
         if self.algorithm == "fasterrcnn":
-            config = self._generate_train_fasterrcnn_config(**kwargs)
+            train_config, hyperparams = self._generate_train_fasterrcnn_config(**kwargs)
         elif self.algorithm == "ssd":
-            config = self._generate_train_ssd_config(**kwargs)
+            train_config, hyperparams = self._generate_train_ssd_config(**kwargs)
 
         if not os.path.exists("data/luminoth"):
             os.mkdir("data/luminoth")
 
         with open("data/luminoth/luminoth.yml", "w") as f:
-            f.write(yaml.dump(config))
+            f.write(yaml.dump(train_config))
 
-        return get_config("data/luminoth/luminoth.yml")
+        return get_config("data/luminoth/luminoth.yml"), hyperparams
 
     def _generate_train_fasterrcnn_config(self, **kwargs):
         default_optimizer = {
@@ -68,7 +86,7 @@ class LuminothAnnotationLibraryTrainer(AnnotationLibraryTrainer):
             "momentum": 0.9
         }
 
-        return {
+        train_config = {
             "train": {
                 "seed": kwargs.get("seed"),
                 "job_dir": "data/luminoth",
@@ -118,17 +136,39 @@ class LuminothAnnotationLibraryTrainer(AnnotationLibraryTrainer):
                     }
                 }
             }
-        } 
+        }
+
+        hyperparams = {
+            "seed": train_config["train"]["seed"],
+            "run_name": train_config["train"]["run_name"],
+            "clip_gradients": train_config["train"]["clip_by_norm"],
+            "learning_rate": train_config["train"]["learning_rate"]["learning_rate"],
+            "optimizer": train_config["train"]["optimizer"]["type"],
+            "epochs": train_config["train"]["num_epochs"],
+            "algorithm": train_config["model"]["type"],
+            "batch_normalization": train_config["model"]["batch_norm"],
+            "architecture": train_config["model"]["base_network"]["architecture"],
+            "anchor_size": train_config["model"]["anchors"]["base_size"],
+            "anchor_scales": train_config["model"]["anchors"]["scales"],
+            "anchor_ratios": train_config["model"]["anchors"]["ratios"],
+            "anchor_stride": train_config["model"]["anchors"]["stride"],
+            "max_proposals_per_class": train_config["model"]["rcnn"]["proposals"]["class_max_detections"],
+            "non_maximum_suppression_threshold": train_config["model"]["rcnn"]["proposals"]["class_nms_threshold"],
+            "max_proposals": train_config["model"]["rcnn"]["proposals"]["total_max_detections"],
+            "minimum_probability": train_config["model"]["rcnn"]["proposals"]["min_prob_threshold"]cli
+        }
+
+        return train_config, hyperparams
 
     def _generate_train_ssd_config(self, **kwargs):
         # TODO: Implement SSD config. Not urgent. We are interested in Faster RCNN.
-        return {}
-    
+        return {}, {}
+
 
 class LuminothAnnotationLibraryReader(ObjectDetectionReader):
     def __init__(self, annotation_library, **kwargs):
         super().__init__(**kwargs)
-        
+
         self.annotation_library = annotation_library
         self.provided_classes = list(self.annotation_library.annotation_classes)
 
