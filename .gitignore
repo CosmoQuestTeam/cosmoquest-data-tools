@@ -9,3 +9,9 @@ __pycache__/
 data/*
 
 config/config.yml
+config/crossbar.json
+
+key.priv
+key.pub
+
+node.pid

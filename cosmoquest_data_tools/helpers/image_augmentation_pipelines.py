@@ -34,7 +34,7 @@ def grayback_gaia():
             )      
         ),
         iaa.Sometimes(0.1, iaa.AdditiveGaussianNoise(scale=(0, 0.1 * 255))),
-        iaa.Sometimes(0.1, 
+        iaa.Sometimes(0.1,
         iaa.OneOf(
                 [
                     iaa.Dropout(p=(0, 0.2)),
@@ -47,6 +47,7 @@ def grayback_gaia():
     ], random_order=False)
 
     return sequence
+
 
 IMAGE_AUGMENTATION_PIPELINES = {
     "DEFAULT": grayback_gaia,

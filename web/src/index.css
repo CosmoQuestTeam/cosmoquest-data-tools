@@ -1,0 +1,11 @@
+* {
+  font-family: "Exo 2";
+}
+
+::selection {
+  background-color: #9e2320;
+}
+
+html {
+  background-color: #363636;
+}
