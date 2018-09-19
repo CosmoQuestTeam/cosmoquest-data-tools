@@ -1,0 +1,8 @@
+.annotation-libraries h2 {
+    font-size: 32px;
+    font-weight: 400;
+}
+
+.annotation-libraries .spinner {
+    display: inline-flex !important; 
+}

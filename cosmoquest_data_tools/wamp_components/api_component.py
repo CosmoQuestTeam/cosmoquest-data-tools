@@ -6,6 +6,8 @@ from autobahn.wamp import auth
 
 from cosmoquest_data_tools.config import config
 
+from cosmoquest_data_tools.annotation_library import AnnotationLibrary
+
 
 class APIComponent:
     @classmethod
@@ -36,10 +38,11 @@ class APIWAMPComponent(ApplicationSession):
 
     async def onJoin(self, details):
 
-        def foo():
-            return {"foo": "bar"}
+        def list_annotation_libraries():
+            annotation_libraries = AnnotationLibrary.discover("data")
+            return {"annotation_libraries": [al.as_json_minimal() for al in annotation_libraries]}
 
-        await self.register(foo, f"{config['crossbar']['realm']}.foo", options=RegisterOptions(invoke="roundrobin"))
+        await self.register(list_annotation_libraries, f"{config['crossbar']['realm']}.list_annotation_libraries", options=RegisterOptions(invoke="roundrobin"))
 
 
 if __name__ == "__main__":

@@ -11,6 +11,8 @@ from PIL import Image
 import skimage.color
 import skimage.util
 
+from hurry.filesize import size, alternative
+
 
 class AnnotationLibrary:
 
@@ -22,7 +24,7 @@ class AnnotationLibrary:
 
         self.keys = self._populate_keys()
         self.annotation_classes = self._populate_annotation_classes()
-        
+
     @property
     def file_path(self):
         return f"data/{self.name}.alh5"
@@ -31,6 +33,18 @@ class AnnotationLibrary:
     def entries(self):
         return [key.decode("utf-8") for key in self.h5_file["keys"].value]
 
+    def as_json_minimal(self):
+        return {
+            "name": self.name,
+            "file_path": self.file_path,
+            "file_size": size(os.path.getsize(self.file_path), system=alternative),
+            "entry_count": len(self.entries),
+            "annotation_classes": list(self.annotation_classes)
+        }
+
+    def as_json(self):
+        pass
+
     def add_entry(self, key, field, data):
         self.keys.add(key.encode("utf-8"))
         self.h5_file.create_dataset(f"{key}-{field}", data=data)
@@ -38,22 +52,22 @@ class AnnotationLibrary:
     def add_complete_entry(self, entry):
         key = entry["file_location"].replace(".png", "")
         self.keys.add(key.encode("utf-8"))
-        
+
         # Image Data
         with open(entry["file_location"], "rb") as f:
             image_bytes = f.read()
-        
+
         self.h5_file.create_dataset(f"{key}-image", data=[image_bytes])
-        
+
         image_bytes = None
-        
+
         # Image Shape
         image_shape = (entry["height"], entry["width"], 3)
         self.h5_file.create_dataset(f"{key}-shape", data=image_shape)
-        
+
         # Bounding Boxes
         bounding_boxes = list()
-        
+
         for bounding_box in entry["bounding_boxes"]:
             annotation_class = bounding_box["annotation_class"].encode("utf-8")
 
@@ -72,7 +86,7 @@ class AnnotationLibrary:
             ))
 
             self.annotation_classes.add(annotation_class)
-            
+
         self.h5_file.create_dataset(f"{key}-bounding-boxes", data=bounding_boxes)
 
     def get_entry(self, key, field):
@@ -93,7 +107,7 @@ class AnnotationLibrary:
 
     def get_image_shape(self, key):
         return [int(i) for i in self.get_entry(key, "shape")]
-    
+
     def get_bounding_boxes(self, key):
         return self._format_bounding_boxes(self.get_entry(key, "bounding-boxes"))
 
@@ -190,3 +204,20 @@ class AnnotationLibrary:
                 raise FileNotFoundError(file_path)
 
         return cls(name, file_path=file_path, **kwargs)
+
+    @classmethod
+    def discover(cls, path):
+        if not os.path.isdir(path):
+            raise FileNotFoundError(path)
+
+        annotation_library_file_paths = list()
+
+        for root, dirs, files in os.walk(path):
+            if root != path:
+                break
+
+            for file in files:
+                if file.endswith(".alh5"):
+                    annotation_library_file_paths.append(f"{root}/{file}")
+
+        return [cls.load(file_path, read_only=True) for file_path in annotation_library_file_paths]

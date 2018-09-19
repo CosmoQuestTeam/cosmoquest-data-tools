@@ -1,11 +1,20 @@
 * {
   font-family: "Exo 2";
+  /* outline: 1px dashed #9e2320; */
 }
 
-::selection {
+/* ::selection {
   background-color: #9e2320;
+} */
+
+:focus {
+  outline: transparent auto 2px !important; 
 }
 
 html {
-  background-color: #363636;
+  background-color: #26313a;
+}
+
+body {
+  height: 100vh;
 }

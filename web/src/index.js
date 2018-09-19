@@ -5,7 +5,7 @@ import {BrowserRouter, Route} from 'react-router-dom';
 
 import App from './containers/App';
 
-import {wampClient} from './helpers/wamp_client';
+import {wampClient} from './wamp_client';
 
 import 'normalize.css/normalize.css';
 
@@ -18,7 +18,7 @@ import './index.css';
 
 ReactDOM.render(
     <BrowserRouter>
-        <div className="container-fluid bp3-dark">
+        <div className="bp3-dark" style={{height: "100%"}}>
             <Route path="/" component={App} />
         </div>
     </BrowserRouter>,

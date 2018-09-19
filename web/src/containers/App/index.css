@@ -1,4 +1,13 @@
 .app h1 {
-    font-size: 32px;
+    font-size: 40px;
     font-weight: 700;
+}
+
+.app .side {
+    background-color: #212930;
+}
+
+.app .side h2 {
+    font-size: 28px;
+    margin-top: 60px;
 }

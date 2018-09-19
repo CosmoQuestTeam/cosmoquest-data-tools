@@ -12,3 +12,4 @@ luminoth==0.2.0
 comet_ml==1.0.27
 crossbar==18.9.2
 autobahn==18.9.2
+hurry.filesize==0.9

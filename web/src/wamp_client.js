@@ -1,6 +1,6 @@
 import autobahn from 'autobahn';
 
-import config from '../config.json';
+import config from './config.json';
 
 class WAMPClient {
     constructor() {
