@@ -3,6 +3,7 @@ import os
 import io
 import subprocess
 import shlex
+import base64
 
 import numpy as np
 
@@ -43,7 +44,28 @@ class AnnotationLibrary:
         }
 
     def as_json(self):
-        pass
+        return {
+            **self.as_json_minimal(),
+            **self.as_json_entry(0)  # We bundle entry index 0 by default
+        }
+
+    def as_json_entry(self, index):
+        entry = self.entries[index]
+
+        image_bytes = self.get_image_bytes(entry)
+        image_shape = self.get_image_shape(entry)
+        bounding_boxes = self.get_bounding_boxes(entry)
+
+        return {
+            "annotation_library_entry": {
+                "annotation_library": self.name,
+                "image_base64": base64.b64encode(image_bytes).decode("utf-8"),
+                "image_width": image_shape[1],
+                "image_height": image_shape[0],
+                "image_channels": image_shape[2],
+                "bounding_boxes": bounding_boxes
+            }
+        }
 
     def add_entry(self, key, field, data):
         self.keys.add(key.encode("utf-8"))

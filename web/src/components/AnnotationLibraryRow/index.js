@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
+import { withRouter } from 'react-router'
+
 import { Button } from "@blueprintjs/core";
 
 
@@ -36,11 +38,23 @@ class AnnotationLibraryRow extends Component {
                 <td><span>{this.props.annotationLibrary.entry_count}</span></td>
                 <td><span>{this.props.annotationLibrary.annotation_classes.join(", ")}</span></td>
                 <td style={{padding: "0 11px"}}>
-                    <Button icon="eye-open" intent="primary" small style={{marginTop: 8}}>Inspect</Button>
+                    <Button 
+                        icon="eye-open" 
+                        intent="primary" 
+                        small 
+                        style={{marginTop: 8}}
+                        onClick={this.handleInspectClick}
+                    >
+                        Inspect
+                    </Button>
                 </td>
             </tr>
         )
     }
+
+    handleInspectClick = (e) => {
+        this.props.history.push("annotation_library/" + this.props.annotationLibrary.name);
+    }
 }
 
-export default AnnotationLibraryRow;
+export default withRouter(AnnotationLibraryRow);

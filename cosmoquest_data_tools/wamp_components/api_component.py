@@ -40,9 +40,41 @@ class APIWAMPComponent(ApplicationSession):
 
         def list_annotation_libraries():
             annotation_libraries = AnnotationLibrary.discover("data")
-            return {"annotation_libraries": [al.as_json_minimal() for al in annotation_libraries]}
+            return {
+                "success": [True, None],
+                "annotation_libraries": [al.as_json_minimal() for al in annotation_libraries]
+            }
+
+        def get_annotation_library(annotation_library_name):
+            try:
+                annotation_library = AnnotationLibrary.load(annotation_library_name, read_only=True)
+            except FileNotFoundError:
+                return {"success": [False, "Annotation Library not found"]}
+
+            return {
+                "success": [True, None],
+                "annotation_library": annotation_library.as_json()
+            }
+
+        def get_annotation_library_entry(annotation_library_name, entry_index):
+            try:
+                annotation_library = AnnotationLibrary.load(annotation_library_name, read_only=True)
+            except FileNotFoundError:
+                return {"success": [False, "Annotation Library not found"]}
+
+            try:
+                annotation_library_entry = annotation_library.as_json_entry(entry_index)
+            except Exception:
+                return {"success": [False, f"Error while generating the Annotation Library entry for index {entry_index}"]}
+
+            return {
+                "success": [True, None],
+                "annotation_library_entry": annotation_library_entry
+            }
 
         await self.register(list_annotation_libraries, f"{config['crossbar']['realm']}.list_annotation_libraries", options=RegisterOptions(invoke="roundrobin"))
+        await self.register(get_annotation_library, f"{config['crossbar']['realm']}.get_annotation_library", options=RegisterOptions(invoke="roundrobin"))
+        await self.register(get_annotation_library_entry, f"{config['crossbar']['realm']}.get_annotation_library_entry", options=RegisterOptions(invoke="roundrobin"))
 
 
 if __name__ == "__main__":

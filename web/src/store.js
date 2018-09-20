@@ -2,7 +2,9 @@ import createStore from 'react-waterfall';
 
 const config = {
     initialState: {
-        annotationLibraries: null
+        annotationLibraries: null,
+        annotationLibrary: null,
+        annotationLibraryEntry: null
     },
     actionsCreators: {
         setAnnotationLibraries: ({ annotationLibraries }, func, data) => {
@@ -10,7 +12,19 @@ const config = {
                 annotationLibraries: data
             };
         },
-        clearAnnotationLibraries: ({ annotationLibraries }) => ({ annotationLibraries: null })
+        clearAnnotationLibraries: ({ annotationLibraries }) => ({ annotationLibraries: null }),
+        setAnnotationLibrary: ({ annotationLibrary }, func, data) => {
+            return {
+                annotationLibrary: data
+            };
+        },
+        clearAnnotationLibrary: ({ annotationLibrary }) => ({ annotationLibrary: null }),
+        setAnnotationLibraryEntry: ({ annotationLibraryEntry }, func, data) => {
+            return {
+                annotationLibraryEntry: data
+            };
+        },
+        clearAnnotationLibraryEntry: ({ annotationLibraryEntry }) => ({ annotationLibraryEntry: null }),
     },
 };
 

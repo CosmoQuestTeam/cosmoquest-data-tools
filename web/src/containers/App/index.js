@@ -6,6 +6,7 @@ import { Route } from 'react-router-dom';
 import { Icon, Tabs, Tab } from "@blueprintjs/core";
 
 import AnnotationLibraries from '../AnnotationLibraries';
+import AnnotationLibrary from '../AnnotationLibrary';
 
 import { Provider } from '../../store';
 
@@ -40,6 +41,7 @@ class App extends Component {
                                     <div className="container-fluid">
                                         <Route path="/" component={AnnotationLibraries} exact />
                                         <Route path="/annotation_libraries" component={AnnotationLibraries} exact />
+                                        <Route path="/annotation_library/:name" component={AnnotationLibrary} />
                                         <Route path="/empty" component={""} exact />
                                     </div>
                                 </div>
@@ -65,7 +67,7 @@ class App extends Component {
     }
 
     handleNavigationClick = (route) => {
-        this.props.history.push(route);
+        this.props.history.push("/" + route);
     }
 }
 
