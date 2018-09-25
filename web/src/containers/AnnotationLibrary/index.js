@@ -8,6 +8,7 @@ import { Select } from "@blueprintjs/select";
 
 import AnnotationLibraryInfo from '../../components/AnnotationLibraryInfo';
 import BoundingBoxTable from '../../components/BoundingBoxTable';
+import ImageViewer from '../../components/ImageViewer';
 
 import './index.css';
 
@@ -46,7 +47,7 @@ class AnnotationLibrary extends Component {
     render() {
         return (
             <div className="annotation-library col-md-12">
-                {this.props.annotationLibrary === null ? this.renderSkeleton() : this.renderData()}
+                {(this.props.annotationLibrary === null || this.props.annotationLibraryEntry === null) ? this.renderSkeleton() : this.renderData()}
             </div>
         )
     }
@@ -77,8 +78,13 @@ class AnnotationLibrary extends Component {
                 </h2>
 
                 <div className="row">
-                    <div className="col-md-8">
-                        <img src={"data:image/png;base64," + this.props.annotationLibraryEntry.image_base64} />
+                    <div className="col-md-8 image-viewer">
+                        <canvas id="image_viewer" />
+
+                        <ImageViewer 
+                            imageBase64={this.props.annotationLibraryEntry.image_base64}
+                            boundingBoxes={this.props.annotationLibraryEntry.bounding_boxes} 
+                        />
                     </div>
 
                     <div className="col-md-4">
@@ -88,8 +94,6 @@ class AnnotationLibrary extends Component {
                         </div>
                     </div>
                 </div>
-
-                
             </div>
         )
     }

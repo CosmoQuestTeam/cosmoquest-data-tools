@@ -87,8 +87,8 @@ function getAnnotationLibrary(name) {
         }
 
         if (response.annotation_library !== null) {
-            actions.setAnnotationLibraryEntry(response.annotation_library.annotation_library_entry);
             actions.setAnnotationLibrary(response.annotation_library);
+            actions.setAnnotationLibraryEntry(response.annotation_library.annotation_library_entry);
         }
     }
 
