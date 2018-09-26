@@ -3,30 +3,19 @@ import PropTypes from 'prop-types';
 
 import * as PIXI from "pixi.js";
 
+import { connect } from '../../store';
+
 
 class ImageViewer extends Component {
     constructor(props, context) {
         super(props, context);
 
-        this.state = {
-            x: 0,
-            y: 0,
-            scaleX: 1.0,
-            scaleY: 1.0,
-            zooming: {
-                inProgress: false,
-                remainingFactor: 1,
-                lastUpdate: 0,
-                epsilon: 0.001
-            },
-            panning: {
-                inProgress: false,
-                lastLocation: [0, 0]
-            }
-        };
+        this.state = this.resetState();
 
         this.application = null;
         this.applicationRendered = false;
+
+        this.eventHandlersRegistered = false;
 
         this.image = null;
     }
@@ -36,7 +25,8 @@ class ImageViewer extends Component {
         imageWidth: PropTypes.number.isRequired,
         imageHeight: PropTypes.number.isRequired,
         boundingBoxes: PropTypes.array,
-        boundingBoxMetaColors: PropTypes.object
+        boundingBoxMetaColors: PropTypes.object,
+        selectedBoundingBoxIndex: PropTypes.number
     };
 
     static defaultProps = {
@@ -51,11 +41,22 @@ class ImageViewer extends Component {
 
     };
 
+    componentWillReceiveProps(newProps) {
+        this.applicationRendered = false;
+    };
+
     render() {
         if (this.application !== null) {
             if (!this.applicationRendered) {
                 this.resetCanvas();
-                this.registerEventHandlers();
+
+                this.state = this.resetState();
+                this.updateCanvas();
+
+                if (!this.eventHandlersRegistered) {
+                    this.registerEventHandlers();
+                }
+
                 this.renderImage();
                 this.renderBoundingBoxes();
 
@@ -73,6 +74,25 @@ class ImageViewer extends Component {
 
     resetCanvas = () => {
         this.application.stage.removeChildren();
+    }
+
+    resetState = () => {
+        return {
+            x: 0,
+            y: 0,
+            scaleX: 1.0,
+            scaleY: 1.0,
+            zooming: {
+                inProgress: false,
+                remainingFactor: 1,
+                lastUpdate: 0,
+                epsilon: 0.001
+            },
+            panning: {
+                inProgress: false,
+                lastLocation: [0, 0]
+            }
+        };
     }
 
     updateCanvas = () => {
@@ -139,6 +159,8 @@ class ImageViewer extends Component {
             
             e.preventDefault();
         });
+
+        this.eventHandlersRegistered = true;
     }
 
     renderImage = () => {
@@ -158,14 +180,14 @@ class ImageViewer extends Component {
         this.props.boundingBoxes.forEach((bb, i) => {
             let graphics = new PIXI.Graphics();
             const color = parseInt(this.props.boundingBoxMetaColors[bb.meta].replace(/^#/, ""), 16);
-
+            
             graphics.beginFill(color, 0.1);
-            graphics.lineStyle(2, color);
+            graphics.lineStyle(2, color, 1);
 
-            bb.x0 = Math.max(0, bb.x0);
-            bb.y0 = Math.max(0, bb.y0);
-            bb.x1 = Math.min(this.props.imageWidth, bb.x1);
-            bb.y1 = Math.min(this.props.imageHeight, bb.y1);
+            // bb.x0 = Math.max(0, bb.x0);
+            // bb.y0 = Math.max(0, bb.y0);
+            // bb.x1 = Math.min(this.props.imageWidth, bb.x1);
+            // bb.y1 = Math.min(this.props.imageHeight, bb.y1);
             
             graphics.drawRect(
                 bb.x0, 
@@ -173,6 +195,10 @@ class ImageViewer extends Component {
                 bb.x1 - bb.x0, 
                 bb.y1 - bb.y0
             );
+
+            if (this.props.selectedBoundingBoxIndex !== null && this.props.selectedBoundingBoxIndex !== i) {
+                graphics.alpha = 0.3;
+            }
 
             this.image.addChild(graphics);
         });
@@ -289,4 +315,4 @@ class ImageViewer extends Component {
     }
 }
 
-export default ImageViewer;
+export default connect(({selectedBoundingBoxIndex}) => ({selectedBoundingBoxIndex}))(ImageViewer);

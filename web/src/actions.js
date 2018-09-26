@@ -129,6 +129,16 @@ function clearAnnotationLibraryEntry() {
 }
 
 
+function setSelectedBoundingBox(index) {
+    actions.setSelectedBoundingBoxIndex(index)
+}
+
+
+function clearSelectedBoundingBox() {
+    actions.setSelectedBoundingBoxIndex(null);
+}
+
+
 export {
     notifyInfo,
     notifySuccess,
@@ -139,5 +149,7 @@ export {
     getAnnotationLibrary,
     clearAnnotationLibrary,
     getAnnotationLibraryEntry,
-    clearAnnotationLibraryEntry
+    clearAnnotationLibraryEntry,
+    setSelectedBoundingBox,
+    clearSelectedBoundingBox
 }

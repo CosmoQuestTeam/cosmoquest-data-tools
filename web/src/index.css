@@ -18,3 +18,7 @@ html {
 body {
   height: 100vh;
 }
+
+.animate-opacity {
+  transition: 0.2s opacity;
+}

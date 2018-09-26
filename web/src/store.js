@@ -10,7 +10,8 @@ const config = {
         annotationLibrary: null,
         annotationLibraryEntry: null,
         boundingBoxMetaColors: {},
-        boundingBoxMetaColorPaletteIndex: 0
+        boundingBoxMetaColorPaletteIndex: 0,
+        selectedBoundingBoxIndex: null
     },
     actionsCreators: {
         setAnnotationLibraries: ({ annotationLibraries }, func, data) => {
@@ -44,6 +45,11 @@ const config = {
             };
         },
         clearAnnotationLibraryEntry: ({ annotationLibraryEntry }) => ({ annotationLibraryEntry: null }),
+        setSelectedBoundingBoxIndex: ({ selectedBoundingBoxIndex }, func, data) => {
+            return {
+                selectedBoundingBoxIndex: data
+            };
+        },
     },
 };
 

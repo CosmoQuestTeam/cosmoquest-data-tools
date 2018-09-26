@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 
 import { withRouter } from 'react-router';
 
-import { Spinner, Button } from '@blueprintjs/core';
+import { Spinner, Button, Hotkey, Hotkeys, HotkeysTarget } from '@blueprintjs/core';
 import { Select } from "@blueprintjs/select";
 
 import AnnotationLibraryInfo from '../../components/AnnotationLibraryInfo';
@@ -17,14 +17,11 @@ import * as AppActions from '../../actions';
 import { connect } from '../../store';
 
 
-
 class AnnotationLibrary extends Component {
     constructor(props, context) {
         super(props, context);
 
-        this.state = {
-            entryIndex: 0
-        };
+        this.entryIndex = 0;
     }
 
     static propTypes = {
@@ -110,6 +107,39 @@ class AnnotationLibrary extends Component {
             <div>{entry}</div>
         )
     }
+
+    renderHotkeys = () => {
+        return (
+            <Hotkeys>
+                <Hotkey
+                    global={true}
+                    combo="left"
+                    label="Previous Entry"
+                    onKeyDown={this.goToPreviousEntry}
+                />
+                <Hotkey
+                    global={true}
+                    combo="right"
+                    label="Next Entry"
+                    onKeyDown={this.goToNextEntry}
+                />
+            </Hotkeys>
+        )
+    }
+
+    goToPreviousEntry = () => {
+        if (this.entryIndex > 0) {
+            this.entryIndex -= 1;
+            AppActions.getAnnotationLibraryEntry(this.props.annotationLibrary.name, this.entryIndex);
+        }
+    }
+
+    goToNextEntry = () => {
+        if (this.entryIndex < (this.props.annotationLibrary.entry_count - 1)) {
+            this.entryIndex += 1;
+            AppActions.getAnnotationLibraryEntry(this.props.annotationLibrary.name, this.entryIndex);
+        }
+    }
 }
 
 export default withRouter(
@@ -123,5 +153,5 @@ export default withRouter(
             annotationLibraryEntry,
             boundingBoxMetaColors
         })
-    )(AnnotationLibrary)
+    )(HotkeysTarget(AnnotationLibrary))
 )

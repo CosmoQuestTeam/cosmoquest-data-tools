@@ -69,7 +69,7 @@ class APIWAMPComponent(ApplicationSession):
 
             return {
                 "success": [True, None],
-                "annotation_library_entry": annotation_library_entry
+                **annotation_library_entry
             }
 
         await self.register(list_annotation_libraries, f"{config['crossbar']['realm']}.list_annotation_libraries", options=RegisterOptions(invoke="roundrobin"))
