@@ -20,7 +20,8 @@ class ImageViewer extends Component {
                 epsilon: 0.001
             },
             panning: {
-
+                inProgress: false,
+                lastLocation: [0, 0]
             }
         };
 
@@ -97,7 +98,41 @@ class ImageViewer extends Component {
             }
 
             e.preventDefault();
-        })
+        });
+
+        // Mouse Pan
+        this.application.view.addEventListener("mousedown", (e) => {
+            const cursorLocation = this.application.renderer.plugins.interaction.eventData.data.global;
+            
+            this.state.panning.lastLocation = [cursorLocation.x, cursorLocation.y];
+            this.state.panning.inProgress = false;
+
+            const schedulePan = () => {
+                if (!this.state.panning.inProgress) {
+                    this.state.panning.inProgress = true;
+                    requestAnimationFrame(this.panCanvas);
+                }
+            }
+
+            this.application.stage.mousemove = schedulePan;
+            this.application.stage.mousemoveoutside = schedulePan;
+
+            const stopPan = (e) => {
+                this.state.panning.inProgress = false;
+
+                const cursorLocation = this.application.renderer.plugins.interaction.eventData.data.global;
+                this.state.panning.lastLocation = [cursorLocation.x, cursorLocation.y];
+
+                delete this.application.stage.mousemove;
+                delete this.application.stage.mousemoveoutside;
+
+            }
+
+            this.application.stage.mouseup = stopPan;
+            this.application.stage.mouseupoutside = stopPan;
+            
+            e.preventDefault();
+        });
     }
 
     renderImage = () => {
@@ -169,6 +204,24 @@ class ImageViewer extends Component {
         else {
             requestAnimationFrame(this.zoomCanvasSmooth);
         }
+    }
+
+    panCanvas = () => {
+        this.state.panning.inProgress = false;
+
+        const cursorLocation = this.application.renderer.plugins.interaction.eventData.data.global;
+
+        const deltaX = cursorLocation.x - this.state.panning.lastLocation[0];
+        const deltaY = cursorLocation.y - this.state.panning.lastLocation[1];
+
+        this.state.panning.lastLocation = [cursorLocation.x, cursorLocation.y];
+
+        let newState = {...this.state};
+
+        newState.x += deltaX;
+        newState.y += deltaY;
+
+        this.setState(this.sanitizeState(newState));
     }
 
     sanitizeState = (newState) => {
