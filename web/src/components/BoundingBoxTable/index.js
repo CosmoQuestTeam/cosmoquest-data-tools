@@ -13,6 +13,7 @@ class BoundingBoxTable extends Component {
 
     static propTypes = {
         boundingBoxes: PropTypes.array.isRequired,
+        boundingBoxMetaColors: PropTypes.object
     };
 
     static defaultProps = {
@@ -48,7 +49,7 @@ class BoundingBoxTable extends Component {
                                     <tr>
                                         <td><Pre style={{ padding: 5, width: 140 }}>({ bb.y0 },{ bb.x0 },{ bb.y1 },{ bb.x1 })</Pre></td>
                                         <td><Tag icon="edit" style={{ marginTop: 13 }}>{bb.label}</Tag></td>
-                                        <td><Tag intent="success" style={{ marginTop: 13 }}>{bb.meta}</Tag></td>
+                                        <td><Tag style={{ marginTop: 13, backgroundColor: this.props.boundingBoxMetaColors[bb.meta], color: "#FFFFFF" }}>{bb.meta}</Tag></td>
                                     </tr>
                                 )
                             })}

@@ -29,7 +29,8 @@ class AnnotationLibrary extends Component {
 
     static propTypes = {
         annotationLibrary: PropTypes.object,
-        annotationLibraryEntry: PropTypes.object
+        annotationLibraryEntry: PropTypes.object,
+        boundingBoxMetaColors: PropTypes.object
     };
 
     static defaultProps = {
@@ -83,14 +84,20 @@ class AnnotationLibrary extends Component {
 
                         <ImageViewer 
                             imageBase64={this.props.annotationLibraryEntry.image_base64}
-                            boundingBoxes={this.props.annotationLibraryEntry.bounding_boxes} 
+                            imageWidth={this.props.annotationLibraryEntry.image_width}
+                            imageHeight={this.props.annotationLibraryEntry.image_height}
+                            boundingBoxes={this.props.annotationLibraryEntry.bounding_boxes}
+                            boundingBoxMetaColors={this.props.boundingBoxMetaColors}
                         />
                     </div>
 
                     <div className="col-md-4">
                         <div className="row">
                             <AnnotationLibraryInfo annotationLibrary={this.props.annotationLibrary} />
-                            <BoundingBoxTable boundingBoxes={this.props.annotationLibraryEntry.bounding_boxes} />
+                            <BoundingBoxTable 
+                                boundingBoxes={this.props.annotationLibraryEntry.bounding_boxes} 
+                                boundingBoxMetaColors={this.props.boundingBoxMetaColors}    
+                            />
                         </div>
                     </div>
                 </div>
@@ -105,4 +112,16 @@ class AnnotationLibrary extends Component {
     }
 }
 
-export default withRouter(connect(({ annotationLibrary, annotationLibraryEntry }) => ({ annotationLibrary, annotationLibraryEntry }))(AnnotationLibrary))
+export default withRouter(
+    connect(
+        ({ 
+            annotationLibrary, 
+            annotationLibraryEntry,
+            boundingBoxMetaColors
+        }) => ({ 
+            annotationLibrary, 
+            annotationLibraryEntry,
+            boundingBoxMetaColors
+        })
+    )(AnnotationLibrary)
+)

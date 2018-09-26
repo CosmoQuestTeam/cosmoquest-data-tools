@@ -27,11 +27,16 @@ class ImageViewer extends Component {
 
         this.application = null;
         this.applicationRendered = false;
+
+        this.image = null;
     }
 
     static propTypes = {
         imageBase64: PropTypes.string,
-        boundingBoxes: PropTypes.array
+        imageWidth: PropTypes.number.isRequired,
+        imageHeight: PropTypes.number.isRequired,
+        boundingBoxes: PropTypes.array,
+        boundingBoxMetaColors: PropTypes.object
     };
 
     static defaultProps = {
@@ -52,6 +57,7 @@ class ImageViewer extends Component {
                 this.resetCanvas();
                 this.registerEventHandlers();
                 this.renderImage();
+                this.renderBoundingBoxes();
 
                 this.applicationRendered = true;
             }
@@ -145,6 +151,31 @@ class ImageViewer extends Component {
         image.y = 0;
 
         this.application.stage.addChild(image);
+        this.image = image;
+    }
+
+    renderBoundingBoxes = () => {
+        this.props.boundingBoxes.forEach((bb, i) => {
+            let graphics = new PIXI.Graphics();
+            const color = parseInt(this.props.boundingBoxMetaColors[bb.meta].replace(/^#/, ""), 16);
+
+            graphics.beginFill(color, 0.1);
+            graphics.lineStyle(2, color);
+
+            bb.x0 = Math.max(0, bb.x0);
+            bb.y0 = Math.max(0, bb.y0);
+            bb.x1 = Math.min(this.props.imageWidth, bb.x1);
+            bb.y1 = Math.min(this.props.imageHeight, bb.y1);
+            
+            graphics.drawRect(
+                bb.x0, 
+                bb.y0, 
+                bb.x1 - bb.x0, 
+                bb.y1 - bb.y0
+            );
+
+            this.image.addChild(graphics);
+        });
     }
 
     initializeApplication = () => {
